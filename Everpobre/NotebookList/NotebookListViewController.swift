@@ -54,6 +54,20 @@ class NotebookListViewController: UIViewController {
         return NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: managedContext, sectionNameKeyPath: nil, cacheName: nil)
     }
     
+    private func setNewFetchedResultsController(_ newfrc: NSFetchedResultsController<Notebook>) {
+        let oldfrc = fetchedResultsController
+        if(newfrc != oldfrc) {
+            fetchedResultsController = newfrc
+            newfrc.delegate = self
+            do {
+                try fetchedResultsController.performFetch()
+            } catch let error as NSError {
+                print("Could not fetch \(error)")
+            }
+            tableView.reloadData()
+        }
+    }
+    
     override func viewDidLoad() {
 //        model = deprecated_Notebook.dummyNotebookModel
         
@@ -232,7 +246,11 @@ extension NotebookListViewController: UISearchResultsUpdating {
 //            dataSource = []
 //        }
 //        populateTotalLabel(with: predicate)
+        let predicate = NSPredicate(format: "name CONTAINS[c] %@", query)
+        let frc = getFetchedResultsController(with: predicate)
+        setNewFetchedResultsController(frc)
         
+        populateTotalLabel(with: predicate)
     }
     
     private func showAll() {
@@ -254,8 +272,9 @@ extension NotebookListViewController: UISearchResultsUpdating {
 //            dataSource = []
 //        }
         
-        fetchedResultsController = getFetchedResultsController()
-        fetchedResultsController.delegate = self
+        let frc = getFetchedResultsController()
+        setNewFetchedResultsController(frc)
+        //fetchedResultsController.delegate = self
        
         do {
             try fetchedResultsController.performFetch()
@@ -267,9 +286,23 @@ extension NotebookListViewController: UISearchResultsUpdating {
 }
 
 extension NotebookListViewController: NSFetchedResultsControllerDelegate {
-
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.beginUpdates()
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        switch type {
+        case .insert:
+            tableView.insertRows(at: [newIndexPath!], with: .automatic)
+        case .delete:
+            tableView.deleteRows(at: [indexPath!], with: .automatic)
+        default:
+             break
+        }
+    }
+    
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        tableView.reloadData()
+        tableView.endUpdates()
     }
 
 }
