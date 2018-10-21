@@ -23,7 +23,15 @@ class NotebookListViewController: UIViewController {
 //        }
 //    }
     
-    var dataSource: [NSManagedObject] = []
+//    var dataSource: [NSManagedObject] = []{
+//        didSet {
+//            tableView.reloadData()
+//        }
+//    }
+//
+    private var fetchedResultsController: NSFetchedResultsController<Notebook>!
+    
+    
 //   {
 //        do {
 //            return try managedContext.fetch(Notebook.fetchRequest())
@@ -33,6 +41,19 @@ class NotebookListViewController: UIViewController {
 //        }
 //    }
     
+    private func getFetchedResultsController(with predicate: NSPredicate = NSPredicate(value: true)) -> NSFetchedResultsController<Notebook> {
+        
+        let fetchRequest: NSFetchRequest<Notebook> = Notebook.fetchRequest()
+        fetchRequest.predicate = predicate
+        
+        let sort = NSSortDescriptor( key: #keyPath(Notebook.creationDate), ascending: true)
+        fetchRequest.sortDescriptors = [sort]
+        
+        fetchRequest.fetchBatchSize = 20
+        
+        return NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: managedContext, sectionNameKeyPath: nil, cacheName: nil)
+    }
+    
     override func viewDidLoad() {
 //        model = deprecated_Notebook.dummyNotebookModel
         
@@ -41,22 +62,35 @@ class NotebookListViewController: UIViewController {
         
         super.viewDidLoad()
         
-        reloadView()
+        configureSearchController()
+        //reloadView()
+        showAll()
     }
     
-    private func reloadView() {
-        do {
-            dataSource = try managedContext.fetch(Notebook.fetchRequest())
-        } catch let error as NSError {
-            print(error.localizedDescription)
-            dataSource = []
-        }
-        
-        populateTotalLabel ()
-        tableView.reloadData()
+    private func configureSearchController() {
+        let search = UISearchController(searchResultsController: nil)
+        search.searchResultsUpdater = self
+        search.obscuresBackgroundDuringPresentation = false
+        search.searchBar.placeholder = "Search Notebook"
+        navigationItem.searchController = search
+        navigationItem.hidesSearchBarWhenScrolling = true
+        definesPresentationContext = true
     }
     
-    private func populateTotalLabel() {
+//    private func reloadView() {
+//
+//        do {
+//            dataSource = try managedContext.fetch(Notebook.fetchRequest())
+//        } catch let error as NSError {
+//            print(error.localizedDescription)
+//            dataSource = []
+//        }
+//
+//        populateTotalLabel ()
+//        tableView.reloadData()
+//    }
+    
+    private func populateTotalLabel(with predicate: NSPredicate = NSPredicate(value: true)) {
         let fetchRequest = NSFetchRequest<NSNumber>(entityName: "Notebook")
         fetchRequest.resultType = .countResultType
         
@@ -92,7 +126,8 @@ class NotebookListViewController: UIViewController {
             }
         
             //self.tableView.reloadData()
-            self.reloadView()
+            //self.reloadView()
+            self.showAll()
         }
         
         let cancelAction = UIAlertAction(title: "Cancelar", style: .default)
@@ -108,12 +143,16 @@ class NotebookListViewController: UIViewController {
 // MARK: - UITableViewDataSource implementation
 extension NotebookListViewController: UITableViewDataSource{
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return dataSource.count //model.count
+       // return dataSource.count //model.count
+        guard let sectionInfo = fetchedResultsController.sections?[section] else { return 0}
+        return sectionInfo.numberOfObjects
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "NotebookListCell", for: indexPath) as! NotebookListCell
-        let notebook = dataSource[indexPath.row] as! Notebook
+        //let notebook = dataSource[indexPath.row] as! Notebook
+        let notebook = fetchedResultsController.object(at: indexPath)
+        
         //cell.configure(with: model[indexPath.row])
         cell.configure(with: notebook)
         
@@ -125,26 +164,26 @@ extension NotebookListViewController: UITableViewDataSource{
     }
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-                guard
-                    let notebookToRemove = dataSource[indexPath.row] as? Notebook,
-                    editingStyle == .delete
-                else { return }
-        //guard editingStyle == .delete else { return }
+//                guard
+//                    let notebookToRemove = dataSource[indexPath.row] as? Notebook,
+//                    editingStyle == .delete
+//                else { return }
+        guard editingStyle == .delete else { return }
         
-       // let notebookToRemove = fetchedResultsController.object(at: indexPath)
+        let notebookToRemove = fetchedResultsController.object(at: indexPath)
         
         managedContext.delete(notebookToRemove)
         
         do {
             try managedContext.save()
-            tableView.deleteRows(at: [indexPath], with: .automatic)
+            //tableView.deleteRows(at: [indexPath], with: .automatic)
         } catch let error as NSError {
             print("error: \(error.localizedDescription)")
         }
         
         //tableView.reloadData()
-        reloadView()
-        //showAll()
+        //reloadView()
+        showAll()
     }
 }
 
@@ -159,10 +198,78 @@ extension NotebookListViewController: UITableViewDelegate {
 //        let notesListVC = NotesListViewController(notebook: notebook)
 //        self.show(notesListVC, sender: nil)
         
-        let notebook = dataSource[indexPath.row] as! Notebook
+       // let notebook = dataSource[indexPath.row] as! Notebook
+        let notebook = fetchedResultsController.object(at: indexPath)
+        
         let notesListVC = NotesListViewController(notebook: notebook, managedContext: managedContext)
         self.show(notesListVC, sender: nil)
         
     }
 }
 
+extension NotebookListViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        if let text = searchController.searchBar.text, !text.isEmpty {
+            // Mostramos resultados filtrados
+            showFilteredResult(with: text)
+        } else {
+            // Mostramos todos los resultados
+            showAll()
+        }
+    }
+    
+    private func showFilteredResult(with query: String) {
+//        let fetchRequest = NSFetchRequest<Notebook>(entityName: "Notebook")
+//        fetchRequest.resultType = .managedObjectResultType
+//
+//        let predicate = NSPredicate(format: "name CONTAINS[c] %@", query)
+//        fetchRequest.predicate = predicate
+//
+//        do {
+//            dataSource = try managedContext.fetch(Notebook.fetchRequest())
+//        } catch let error as NSError {
+//            print("Could not fetch \(error)")
+//            dataSource = []
+//        }
+//        populateTotalLabel(with: predicate)
+        
+    }
+    
+    private func showAll() {
+//        let asyncFetchRequest = NSAsynchronousFetchRequest(fetchRequest: Notebook.fetchRequest()) { [weak self] (result) in
+//
+//            guard let notebooks = result.finalResult else {
+//                self?.dataSource = []
+//                return
+//
+//            }
+//            self?.dataSource = notebooks
+//        }
+//
+//        do {
+//            //dataSource = try managedContext.fetch(Notebook.fetchRequest())
+//            try managedContext.execute(asyncFetchRequest)
+//        } catch let error as NSError {
+//            print("Could not fetch \(error)")
+//            dataSource = []
+//        }
+        
+        fetchedResultsController = getFetchedResultsController()
+        fetchedResultsController.delegate = self
+       
+        do {
+            try fetchedResultsController.performFetch()
+        } catch let error as NSError {
+            print("Could not fetch \(error)")
+        }
+        populateTotalLabel()
+    }
+}
+
+extension NotebookListViewController: NSFetchedResultsControllerDelegate {
+
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        tableView.reloadData()
+    }
+
+}
