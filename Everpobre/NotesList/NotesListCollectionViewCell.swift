@@ -20,7 +20,7 @@ class NotesListCollectionViewCell: UICollectionViewCell {
     }
     
     func configure(with item: Note) {
-        backgroundColor = .red
+        backgroundColor = .white
         titleLabel.text = item.title
         creationDateLabel.text = (item.creationDate as Date?)?.customStringLabel()
     }

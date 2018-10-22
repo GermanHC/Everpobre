@@ -51,7 +51,11 @@ class NotebookListViewController: UIViewController {
         
         fetchRequest.fetchBatchSize = 20
         
-        return NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: managedContext, sectionNameKeyPath: nil, cacheName: nil)
+        return NSFetchedResultsController(
+            fetchRequest: fetchRequest,
+            managedObjectContext: managedContext,
+            sectionNameKeyPath: #keyPath(Notebook.creationDate),
+            cacheName: nil)
     }
     
     private func setNewFetchedResultsController(_ newfrc: NSFetchedResultsController<Notebook>) {
@@ -155,7 +159,13 @@ class NotebookListViewController: UIViewController {
 }
 
 // MARK: - UITableViewDataSource implementation
+
 extension NotebookListViewController: UITableViewDataSource{
+    func numberOfSections(in tableView: UITableView) -> Int {
+        guard let section = fetchedResultsController.sections else { return 1}
+        return section.count
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
        // return dataSource.count //model.count
         guard let sectionInfo = fetchedResultsController.sections?[section] else { return 0}
@@ -199,6 +209,9 @@ extension NotebookListViewController: UITableViewDataSource{
         //reloadView()
         showAll()
     }
+    
+    
+    
 }
 
 // MARK: - UITableViewDelegate implementation
@@ -215,9 +228,15 @@ extension NotebookListViewController: UITableViewDelegate {
        // let notebook = dataSource[indexPath.row] as! Notebook
         let notebook = fetchedResultsController.object(at: indexPath)
         
-        let notesListVC = NotesListViewController(notebook: notebook, managedContext: managedContext)
+        //let notesListVC = NotesListViewController(notebook: notebook, managedContext: managedContext)
+        let notesListVC = NewNotesListViewController(notebook: notebook, managedContext: managedContext)
         self.show(notesListVC, sender: nil)
         
+    }
+    
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        let sectionInfo = fetchedResultsController.sections?[section]
+        return sectionInfo?.name
     }
 }
 
@@ -298,6 +317,20 @@ extension NotebookListViewController: NSFetchedResultsControllerDelegate {
             tableView.deleteRows(at: [indexPath!], with: .automatic)
         default:
              break
+        }
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
+       
+        let indexSet = IndexSet(integer: sectionIndex)
+        
+        switch type {
+        case .insert:
+            tableView.insertSections(indexSet, with: .automatic)
+        case .delete:
+            tableView.deleteSections(indexSet, with: .automatic)
+        default:
+            break
         }
     }
     
