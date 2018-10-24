@@ -2,7 +2,7 @@
 //  Notebook+CoreDataProperties.swift
 //  Everpobre
 //
-//  Created by German Hernandez on 15/10/18.
+//  Created by German Hernandez on 24/10/18.
 //  Copyright © 2018 German Hernandez. All rights reserved.
 //
 //
