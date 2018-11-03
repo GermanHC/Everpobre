@@ -10,27 +10,28 @@ import UIKit
 import CoreData
 
 class NotesListViewController: UIViewController {
+    
     lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
         tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
     }()
     
-    let notebook: Notebook // deprecated_Notebook
+    let notebook: Notebook//deprecated_Notebook
     let managedContext: NSManagedObjectContext
     
-//    var notes: [deprecated_Note] = [] {
-//        didSet{
-//            tableView.reloadData()
-//        }
-//    }
+    //    var notes: [deprecated_Note] = [] {
+    //        didSet {
+    //            tableView.reloadData()
+    //        }
+    //    }
     
-//        var notes: [Note] {
-//            guard let notes = notebook.notes?.array else { return [] }
-//
-//            return notes as! [Note]
-//        }
-
+    //    var notes: [Note] {
+    //        guard let notes = notebook.notes?.array else { return [] }
+    //
+    //        return notes as! [Note]
+    //    }
+    
     var notes: [Note] {
         didSet {
             tableView.reloadData()
@@ -44,13 +45,6 @@ class NotesListViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
     }
     
-//    init(notebook: Notebook, managedContext: NSManagedObjectContext) {
-//        self.notebook = notebook
-//        self.managedContext = managedContext
-//        super.init(nibName: nil, bundle: nil)
-//    }
-
-    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -61,8 +55,10 @@ class NotesListViewController: UIViewController {
         //self.navigationController?.navigationBar.isTranslucent = false
         title = "Notas"
         
-        let addButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNote))
+        let addButtonItem = UIBarButtonItem(barButtonSystemItem: .add
+            , target: self, action: #selector(addNote))
         navigationItem.rightBarButtonItem = addButtonItem
+        
         setupTableView()
     }
     
@@ -71,7 +67,6 @@ class NotesListViewController: UIViewController {
         newNoteVC.delegate = self
         let navVC = UINavigationController(rootViewController: newNoteVC)
         present(navVC, animated: true, completion: nil)
-        
     }
     
     private func setupTableView() {
@@ -84,6 +79,7 @@ class NotesListViewController: UIViewController {
         tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
         tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
         tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor).isActive = true
+        
     }
 }
 
@@ -95,13 +91,13 @@ extension NotesListViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: "Cell")
         cell.textLabel?.text = notes[indexPath.row].title
-    
+        
         return cell
     }
 }
 
 extension NotesListViewController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //let detailVC = NoteDetailsViewController(note: notes[indexPath.row])
         let detailVC = NoteDetailsViewController(kind: .existing(note: notes[indexPath.row]), managedContext: managedContext)
         detailVC.delegate = self
@@ -111,6 +107,6 @@ extension NotesListViewController: UITableViewDelegate {
 
 extension NotesListViewController: NoteDetailsViewControllerProtocol {
     func didSaveNote() {
-        self.notes = (notebook.notes?.array as? [Note]) ?? []
+        notes = (notebook.notes?.array as? [Note]) ?? []
     }
 }

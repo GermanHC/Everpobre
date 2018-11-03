@@ -23,7 +23,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         else { return true }
         
         // Inyectar coredate stack al VC
-        viewController.managedContext = coreDataStack.managedContext
+        //viewController.managedContext = coreDataStack.managedContext
+        viewController.coreDataStack = coreDataStack
         
         return true
     }
