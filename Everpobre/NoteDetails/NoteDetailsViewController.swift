@@ -34,7 +34,6 @@ class NoteDetailsViewController: UIViewController {
   
     // MARK: Parameters
     
-    //    let note: Note
     let managedContext: NSManagedObjectContext
     let kind: Kind
     
@@ -79,7 +78,6 @@ class NoteDetailsViewController: UIViewController {
         
         title = kind.title
         titleTextField.text = kind.note?.title
-        //tagsLabel.text = note.tags?.joined(separator: ",")
         creationDateLabel.text = "Creado: \((kind.note?.creationDate as Date?)?.customStringLabel() ?? "ND")"
         lastSeenDateLabel.text = "Visto: \((kind.note?.lastSeenDate as Date?)?.customStringLabel() ?? "ND")"
         descriptionTextView.text = kind.note?.text ?? "Ingrese texto..."

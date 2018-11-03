@@ -17,20 +17,8 @@ class NotesListViewController: UIViewController {
         return tableView
     }()
     
-    let notebook: Notebook//deprecated_Notebook
+    let notebook: Notebook
     let managedContext: NSManagedObjectContext
-    
-    //    var notes: [deprecated_Note] = [] {
-    //        didSet {
-    //            tableView.reloadData()
-    //        }
-    //    }
-    
-    //    var notes: [Note] {
-    //        guard let notes = notebook.notes?.array else { return [] }
-    //
-    //        return notes as! [Note]
-    //    }
     
     var notes: [Note] {
         didSet {
@@ -52,7 +40,6 @@ class NotesListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        //self.navigationController?.navigationBar.isTranslucent = false
         title = "Notas"
         
         let addButtonItem = UIBarButtonItem(barButtonSystemItem: .add

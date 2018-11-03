@@ -16,7 +16,6 @@ class NewNotesListViewController: UIViewController {
     // MARK: Properties
     
     let notebook: Notebook
-    //let managedContext: NSManagedObjectContext
     let coreDataStack: CoreDataStack!
     
     var notes: [Note] = [] {
@@ -115,7 +114,6 @@ class NewNotesListViewController: UIViewController {
     
     private func notesFetchRequest(from notebook: Notebook) -> NSFetchRequest<Note> {
         let fetchRequest: NSFetchRequest<Note> = Note.fetchRequest()
-        //fetchRequest.fetchBatchSize = 50
         fetchRequest.predicate = NSPredicate(format: "notebook == %@", notebook)
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
         
@@ -152,8 +150,7 @@ extension NewNotesListViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let detailVC = NoteDetailsViewController(kind: .existing(note: notes[indexPath.row]), managedContext: coreDataStack.managedContext)
         detailVC.delegate = self
-        //self.show(detailVC, sender: nil)
-        
+      
         // custom animation
         let navVC = UINavigationController(rootViewController: detailVC)
         navVC.transitioningDelegate = self
