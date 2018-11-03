@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import CoreLocation
 
 // MARK:- NoteDetailsViewControllerProtocol
 
@@ -27,15 +28,21 @@ class NoteDetailsViewController: UIViewController {
     // MARK: IBOutlets
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var titleTextField: UITextField!
-    @IBOutlet weak var tagsLabel: UILabel!
+    @IBOutlet weak var tagsTextField: UITextField!
     @IBOutlet weak var creationDateLabel: UILabel!
     @IBOutlet weak var lastSeenDateLabel: UILabel!
     @IBOutlet weak var descriptionTextView: UITextView!
+    @IBOutlet weak var latitudeLabel: UILabel!
   
+    @IBOutlet weak var longitudeLabel: UILabel!
+    
     // MARK: Parameters
     
     let managedContext: NSManagedObjectContext
     let kind: Kind
+    let locationManager = CLLocationManager()
+    var latitude: Double = 0
+    var longitude: Double = 0
     
     weak var delegate: NoteDetailsViewControllerProtocol?
     
@@ -56,6 +63,10 @@ class NoteDetailsViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         configure()
+        
+        if CLLocationManager.locationServicesEnabled() {
+            locationManager.requestLocation()
+        }
     }
     
     // MARK: IBAction
@@ -80,14 +91,21 @@ class NoteDetailsViewController: UIViewController {
         titleTextField.text = kind.note?.title
         creationDateLabel.text = "Creado: \((kind.note?.creationDate as Date?)?.customStringLabel() ?? "ND")"
         lastSeenDateLabel.text = "Visto: \((kind.note?.lastSeenDate as Date?)?.customStringLabel() ?? "ND")"
-        descriptionTextView.text = kind.note?.text ?? "Ingrese texto..."
+        descriptionTextView.text = kind.note?.text ?? "Inserte texto..."
+        tagsTextField.text = kind.note?.tags
+        latitudeLabel.text = "\(kind.note?.latitude ?? 0)"
+        longitudeLabel.text = "\(kind.note?.longitude ?? 0)"
         
         guard let data = kind.note?.image as Data? else {
-            imageView.image = #imageLiteral(resourceName: "120x180.png")
+            imageView.image = #imageLiteral(resourceName: "120x180")
             return
         }
         
         imageView.image = UIImage(data: data)
+        
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
     }
     
     @objc private func saveNote() {
@@ -96,12 +114,22 @@ class NoteDetailsViewController: UIViewController {
             note.title = titleTextField.text
             note.text = descriptionTextView.text
             
+            
             let imageData: NSData?
             if let image = imageView.image,
                 let data = image.pngData() {
                 imageData = NSData(data: data)
             } else { imageData = nil }
             note.image = imageData
+            
+            note.tags = tagsTextField.text
+           
+            if note.longitude == 0 && self.longitude != 0 {
+                note.longitude = self.longitude
+            }
+            if note.latitude == 0 && self.latitude != 0 {
+                note.latitude = self.latitude
+            }
             
             return note
         }
@@ -222,5 +250,18 @@ private extension NoteDetailsViewController.Kind {
         case .new:
             return "Nueva Nota"
         }
+    }
+}
+
+extension NoteDetailsViewController: CLLocationManagerDelegate{
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let location = locations.last {
+            self.latitude = location.coordinate.latitude
+            self.longitude = location.coordinate.longitude
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("No se pudo conseguir la ubicación del usuario: \(error.localizedDescription)")
     }
 }
