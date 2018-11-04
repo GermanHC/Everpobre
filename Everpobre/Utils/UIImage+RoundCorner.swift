@@ -55,10 +55,6 @@ extension UIImage {
         let fw: CGFloat = rect.width / ovalWidth
         let fh: CGFloat = rect.height / ovalHeight
         context.move(to: CGPoint(x: fw, y: fh / 2))
-//        CGContextAddArcToPoint(context, fw, fh, fw / 2, fh, 1)
-//        CGContextAddArcToPoint(context, 0, fh, 0, fh / 2, 1)
-//        CGContextAddArcToPoint(context, 0, 0, fw / 2, 0, 1)
-//        CGContextAddArcToPoint(context, fw, 0, fw, fh / 2, 1)
         context.closePath()
         context.restoreGState()
     }
