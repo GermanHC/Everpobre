@@ -126,6 +126,66 @@ class NotebookListViewController: UIViewController {
         
         present(alert, animated: true)
     }
+    private func noteBooksFetchRequest(from notebook: Notebook) -> NSFetchRequest<Notebook> {
+        let fetchRequest: NSFetchRequest<Notebook> = Notebook.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "notebook == %@", notebook)
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: true)]
+        
+        return fetchRequest
+    }
+    
+    @IBAction func exportNoteBooks(_ sender: UIBarButtonItem) {
+        exportCSV()
+    }
+    
+    @objc private func exportCSV() {
+        
+        coreDataStack.storeContainer.performBackgroundTask { [unowned self] context in
+            
+            let fileName = "export.csv"
+            let path = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileName)
+            
+            var notebooks: [Notebook]? = []
+            var csvString: String = ""
+            
+            notebooks = self.fetchedResultsController.fetchedObjects
+            
+            if (notebooks?.count)! > 0{
+                for notebook in notebooks!
+                {
+                    var newLine = notebook.csv() + "\n"
+                    csvString.append(contentsOf: newLine)
+                    if notebook.notes?.count ?? 0 > 0{
+                        for note in notebook.notes!
+                        {
+                            newLine = (note as! Note).csv() + "\n"
+                            csvString.append(contentsOf: newLine)
+                        }
+                    }
+                }
+            }
+            
+            do {
+                try csvString.write(to: path!, atomically: true, encoding: String.Encoding.utf8)
+                
+                let vc = UIActivityViewController(activityItems: [path!], applicationActivities: [])
+                vc.excludedActivityTypes = [
+                    UIActivity.ActivityType.assignToContact,
+                    UIActivity.ActivityType.saveToCameraRoll,
+                    UIActivity.ActivityType.postToFlickr,
+                    UIActivity.ActivityType.postToVimeo,
+                    UIActivity.ActivityType.postToTencentWeibo,
+                    UIActivity.ActivityType.postToTwitter,
+                    UIActivity.ActivityType.postToFacebook,
+                    UIActivity.ActivityType.openInIBooks
+                ]
+                self.present(vc, animated: true, completion: nil)
+            } catch {
+                print("no hemos podido exportar el fichero csv")
+                print("\(error)")
+            }
+        }
+    }
 }
 
 // MARK:- UITableViewDataSource implementation

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="T1y-uz-iz4">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14460.31" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="T1y-uz-iz4">
     <device id="retina4_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14460.20"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="Stack View standard spacing" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -107,11 +107,18 @@
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <navigationItem key="navigationItem" title="NoteBooks" id="Cex-1H-CXF">
-                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="QJh-qh-1qj">
-                            <connections>
-                                <action selector="addNotebook:" destination="BYZ-38-t0r" id="Yxc-sd-Byc"/>
-                            </connections>
-                        </barButtonItem>
+                        <rightBarButtonItems>
+                            <barButtonItem systemItem="add" id="QJh-qh-1qj">
+                                <connections>
+                                    <action selector="addNotebook:" destination="BYZ-38-t0r" id="Yxc-sd-Byc"/>
+                                </connections>
+                            </barButtonItem>
+                            <barButtonItem systemItem="action" id="47r-KM-qhZ" userLabel="Export">
+                                <connections>
+                                    <action selector="exportNoteBooks:" destination="BYZ-38-t0r" id="Qsa-IM-DaC"/>
+                                </connections>
+                            </barButtonItem>
+                        </rightBarButtonItems>
                     </navigationItem>
                     <connections>
                         <outlet property="tableView" destination="RzO-11-VTR" id="dXF-LN-2mQ"/>

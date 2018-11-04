@@ -22,6 +22,6 @@ extension Note {
         let exportedCreationDate = (creationDate as Date?)?.customStringLabel() ?? "ND"
         let exportedTags = tags ?? "ND"
         let exportedCoords = "(\(latitude),\(longitude))"
-        return "\(exportedCreationDate),\(exportedTitle),\(exportedText),\(exportedTags),\(exportedCoords)"
+        return "\"\(exportedCreationDate)\",\"\(exportedTitle)\",\"\(exportedText)\",\"\(exportedTags)\",\"\(exportedCoords)\""
     }
 }

@@ -33,7 +33,6 @@ class NoteDetailsViewController: UIViewController {
     @IBOutlet weak var lastSeenDateLabel: UILabel!
     @IBOutlet weak var descriptionTextView: UITextView!
     @IBOutlet weak var latitudeLabel: UILabel!
-  
     @IBOutlet weak var longitudeLabel: UILabel!
     
     // MARK: Parameters
@@ -62,11 +61,10 @@ class NoteDetailsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        configureLocation()
         configure()
         
-        if CLLocationManager.locationServicesEnabled() {
-            locationManager.requestLocation()
-        }
     }
     
     // MARK: IBAction
@@ -80,6 +78,15 @@ class NoteDetailsViewController: UIViewController {
     }
     
     // MARK: Helper methods
+    private func configureLocation() {
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+        
+        if CLLocationManager.locationServicesEnabled() {
+            locationManager.requestLocation()
+        }
+    }
     
     private func configure() {
         let saveButtonItem = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveNote))
@@ -102,10 +109,7 @@ class NoteDetailsViewController: UIViewController {
         }
         
         imageView.image = UIImage(data: data)
-        
-        locationManager.delegate = self
-        locationManager.requestWhenInUseAuthorization()
-        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+       
     }
     
     @objc private func saveNote() {

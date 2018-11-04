@@ -8,15 +8,22 @@
 
 import UIKit
 import CoreData
+import MapKit
 
 class NewNotesListViewController: UIViewController {
     
     // MARK: IBOutlet
+    @IBOutlet weak var segmentedControl: UISegmentedControl!
     @IBOutlet weak var collectionView: UICollectionView!
-    // MARK: Properties
+    @IBOutlet weak var mapView: MKMapView!
     
+    // MARK: Properties
     let notebook: Notebook
     let coreDataStack: CoreDataStack!
+    var notesLocation: [NoteLocation] = []
+    let locationManager = CLLocationManager()
+    var latitude: Double = 0
+    var longitude: Double = 0
     
     var notes: [Note] = [] {
         didSet {
@@ -33,6 +40,7 @@ class NewNotesListViewController: UIViewController {
         self.notes = (notebook.notes?.array as? [Note]) ?? []
         self.coreDataStack = coreDataStack
         super.init(nibName: "NewNotesListViewController", bundle: nil)
+      
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -43,6 +51,7 @@ class NewNotesListViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        configureLocation()
         
         title = "Notas"
         self.view.backgroundColor = .white
@@ -56,9 +65,50 @@ class NewNotesListViewController: UIViewController {
         let exportButtonItem = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(exportCSV))
         
         self.navigationItem.rightBarButtonItems = [addButtonItem, exportButtonItem]
+        loadNotesLocations()
+    }
+    
+    @IBAction func segmentedControlValueChanged(_ sender: UISegmentedControl) {
+        switch sender.selectedSegmentIndex {
+        case 0:
+            self.collectionView.isHidden = false
+        case 1:
+            self.collectionView.isHidden = true
+        default:
+            return
+        }
     }
     
     // MARK: Helper methods
+    private func configureLocation() {
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+        
+        if CLLocationManager.locationServicesEnabled() {
+            locationManager.requestLocation()
+        }
+    }
+    
+    private func centerMap(){
+        let actualPosition = CLLocationCoordinate2D(latitude: latitude , longitude: longitude)
+        let regionRadius: CLLocationDistance = 100000
+        
+        let region = MKCoordinateRegion(center: actualPosition, latitudinalMeters: regionRadius, longitudinalMeters: 100000)
+        
+        mapView.setRegion(region, animated: true)
+        mapView.delegate = self
+        
+        loadNotesLocations()
+    }
+    
+    private func loadNotesLocations()
+    {
+        for note in self.notes   {
+            self.notesLocation.append(NoteLocation(note: note))
+        }
+    
+    }
     
     @objc private func exportCSV() {
         
@@ -191,5 +241,49 @@ extension NewNotesListViewController: UIViewControllerTransitioningDelegate {
     
     func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
         return nil
+    }
+}
+
+extension NewNotesListViewController: CLLocationManagerDelegate{
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let location = locations.last {
+            self.latitude = location.coordinate.latitude
+            self.longitude = location.coordinate.longitude
+            centerMap()
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("No se pudo conseguir la ubicación del usuario: \(error.localizedDescription)")
+    }
+}
+
+extension NewNotesListViewController: MKMapViewDelegate {
+    func mapViewWillStartRenderingMap(_ mapView: MKMapView) {
+        print("Rendering")
+    }
+    
+    func mapViewDidFinishRenderingMap(_ mapView: MKMapView, fullyRendered: Bool) {
+        mapView.addAnnotations(notesLocation)
+    }
+    
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        if annotation is MKUserLocation{
+            return nil
+        }
+        
+        var annotationView = mapView.dequeueReusableAnnotationView(withIdentifier: "notesLocation") as? MKMarkerAnnotationView
+        
+        if annotationView == nil {
+            annotationView = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: "notesLocation")
+        } else {
+            annotationView?.annotation = annotation
+        }
+        
+        annotationView?.markerTintColor = .green
+        annotationView?.titleVisibility = .visible
+        annotationView?.subtitleVisibility = .adaptive
+        
+        return annotationView
     }
 }
